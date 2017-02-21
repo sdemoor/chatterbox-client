@@ -8,6 +8,7 @@
     <!-- dependencies -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/underscore/underscore-min.js"></script>
+
     <script>
       // YOU DO NOT NEED TO EDIT THIS CODE
       if (!/(&|\?)username=/.test(window.location.search)) {
@@ -29,9 +30,13 @@
       <!-- <form> -->
         <input class="entry" type="text" name="visitor-message" placeholder="Add your message" onfocus="this.placeholder=''" onblur="this.placeholder='Add your message'">
        <!-- <input type="submit" value="Submit"> -->
-      <!-- </form> -->
-      <button class="btn">Submit</button>
-
+      <!-- c -->
+      <button class="submit">Submit</button>
+      <button class="clear">Clear</button>
+      <select id="roomSelect">
+        <option value="lobby">Lobby</option>
+        <option class="add-room" value="add-room">Add room...</option>
+      </select>
       <!-- Your HTML goes here! -->
     </div>
     <div id="chats"></div>

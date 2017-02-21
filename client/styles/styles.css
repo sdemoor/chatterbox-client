@@ -52,6 +52,10 @@ body {
     margin-bottom: 20px;
 }*/
 
+#roomSelect {
+  margin-top: 20px;
+}
+
 .entry {
     margin-right: 10px;
     width: 70%;
