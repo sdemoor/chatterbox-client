@@ -1,13 +1,14 @@
-
-// var message = {
-//   username: 'username',
-//   text: 'Hello World!!!',
-//   roomname: 'hrr22 4life'
-// };
-
 var app = {};
 
-app.init = function() {};
+app.init = function() {
+  app.server = 'http://parse.hrr.hackreactor.com/chatterbox/classes/messages';
+  app.room = 'lobby';
+  app.rooms = ['lobby'];
+  app.fetch();
+  app.friends = [];
+  app.user = window.location.href.split('username=')[1];
+};
+
 app.send = function(message)  {
   $.ajax({
   // This is the url you should use to communicate with the parse API server.
@@ -16,6 +17,9 @@ app.send = function(message)  {
     data: JSON.stringify(message),
     contentType: 'application/json',
     success: function (data) {
+      $('.entry').val('');
+      app.clearMessages();
+      app.fetch();
       console.log('chatterbox: Message sent');
     },
     error: function (data) {
@@ -26,35 +30,52 @@ app.send = function(message)  {
 };
 
 app.fetch = function() {
-  $.get(this.server,function(messages) {
-    console.log('messages came in');
-    console.log(messages);
-    var messages = messages.results;
-    messages.forEach(function(message) {
-      // var text = jsesc(message.text);
-      app.renderMessage(message);
-    });
+  $.ajax({
+  // This is the url you should use to communicate with the parse API server.
+    url: this.server,
+    type: 'GET',
+    data: { order: '-createdAt' },
+    contentType: 'application/json',
+    //headers: {"Content-Security-Policy": 'default-src "none"; script-src "self"; connect-src "self"; img-src "self"; style-src "self"'},
+
+    success: function(messages) {
+      console.log('messages came in');
+      var messages = messages.results;
+      messages.forEach(function(message) {
+        app.renderMessage(message);
+      });
+    },
+    error: function (data) {
+      // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+      console.error('chatterbox: Failed to receive messages', data);
+    }
   });
 };
 
-app.server = 'http://parse.hrr.hackreactor.com/chatterbox/classes/messages';
-app.room = 'lobby';
-app.fetch();
+app.handleSubmit = function (event) {
+  var message = {};
+  message.username = app.user;
+  message.text = $( ".entry" ).val();
+  message.roomname = app.room;
+  app.send(message);
+  event.preventDefault();
+};
 
 $(document).ready(function() {
-  $( ".submit" ).click(function(event) {
+  $( "#send" ).submit(function(event) {
     var visitorMessage = $( ".entry" ).val();
     console.log(visitorMessage);
-    var user = window.location.href.split('username=')[1];
-    var message = {};
-    message.username = user;
-    message.text = visitorMessage;
-    message.roomname = app.room;
-    app.send(message);
+    app.handleSubmit(event);
   });
 
   $( ".clear" ).click(function(event) {
     app.clearMessages();
+  });
+
+  $("body").on("click",".username",function(event) {
+    var user = this.innerHTML;
+    console.log('user: ', user);
+    app.handleUsernameClick(user);
   });
 
   $("#roomSelect").change(function(event) {
@@ -69,21 +90,40 @@ $(document).ready(function() {
   });
 });
 
+app.handleUsernameClick = function(user) {
+  app.friends.push(user);
+  app.clearMessages();
+  app.fetch();
+};
+
 app.clearMessages = function() {
   $('#chats').empty();
 };
 
 app.renderMessage = function(message) {
+  if (app.rooms.indexOf(message.roomname) === -1 && message.roomname) {
+    app.rooms.push(message.roomname);
+    var newRoomMod = message.roomname.replace(' ', '-');
+    $("#roomSelect").prepend($('<option value="' + newRoomMod + '">' + message.roomname + '</option>'));
+  }
+
+
   if(app.room === message.roomname) {
     var messageContainer = $('<div class="chat"></div>');
-    messageContainer.append('<div class="username">' + message.username + '</div>');
-    messageContainer.append('<div class="message-text">' + message.text + '</div');
+    messageContainer.append('<a class="username">' + message.username + '</a>');
+    var escaped = app.escapeHtml(message.text);
+
+    if(app.friends.indexOf(message.username) !== -1) {
+      messageContainer.append('<div class="message-bold">' + escaped + '</div');
+    } else {
+      messageContainer.append('<div class="message-text">' + escaped + '</div');
+    }
+
     $('#chats').append(messageContainer);
   }
-  //return messageContainer;
 };
-app.renderRoom = function(roomName) {
 
+app.renderRoom = function(roomName) {
   if(roomName) {
     var newRoomMod = roomName.replace(' ', '-');
     $("#roomSelect").prepend($('<option value="' + newRoomMod + '">' + roomName + '</option>'));
@@ -93,5 +133,25 @@ app.renderRoom = function(roomName) {
     app.fetch();
   }
 };
+
+app.escapeHtml = function (str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+};
+
+// UNSAFE with unsafe strings; only use on previously-escaped ones!
+app.unescapeHtml = function (escapedStr) {
+  var div = document.createElement('div');
+  div.innerHTML = escapedStr;
+  var child = div.childNodes[0];
+  return child ? child.nodeValue : '';
+};
+
+app.escapeMsg = function(txt) {
+  return app.unescapeHtml(app.escapeHtml(txt));
+};
+
+app.init();
 
 //app.fetch();

@@ -73,8 +73,17 @@ body {
     font-weight: 800;
 }
 
+.chat .message-bold {
+    font-weight: 800;
+}
+
 .chat:hover {
     background-color: #ddd;
+}
+
+.chat .username:hover {
+    color: steelblue;
+    cursor: pointer;
 }
 
 .spinner {
